@@ -1,23 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
+using Timer = System.Timers.Timer;
 
 namespace OnlineStatusMonitor
 {
     public partial class UptimeMonitor : Form
     {
+        private string _currentIcon = "";
+        private bool _isRunning;
+        private Timer _iconTimer;
+        private Timer _timer;
         private int _totalOutages;
         private DateTime? _lastChanged;
         private TimeSpan _totalTimeOffline;
-        private TimeSpan _currentStateTimer;
         private bool _currentlyOnline;
 
         readonly Color _offlineColour = Color.FromArgb(192, 0, 0);
@@ -25,35 +24,64 @@ namespace OnlineStatusMonitor
         readonly Color _okColour = Color.FromArgb(0, 192, 0);
         readonly Font _okFont = new Font("Verdana", 20F, FontStyle.Bold, GraphicsUnit.Point, 0);
 
+        private delegate void ChangeOfStatusDelegate(bool online);
+        private delegate void UpdateStatusDelegate();
+        private delegate void ChangeIconDelegate(string icon);
+
         public UptimeMonitor()
         {
             InitializeComponent();
-
             Reset();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        void UptimeMonitor_Resize(object sender, EventArgs e)
         {
-            button1.Text = "Cancel";
+            if (WindowState == FormWindowState.Minimized)
+                Hide();
+        }
 
-            Reset();
+        void notifyIcon_Click(object sender, EventArgs e)
+        {
+            Show();
+            WindowState = FormWindowState.Normal;
+            Refresh();
+        }
 
-            ShowAsOnline();
-            StartTimer();
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            if (_isRunning)
+            {
+                btnStart.Text = "Start Monitoring";
+
+                lblStatus.Text = "";
+                lblTimer.Text = "";
+
+                StopTimer();
+
+                ShowOnlineIcon();
+
+                _isRunning = false;
+            }
+            else
+            {
+                btnStart.Text = "Stop Monitoring";
+
+                Reset();
+
+                StartTimer();
+
+                _isRunning = true;
+
+                Hide();
+            }
         }
 
         private void Reset()
         {
             _lastChanged = null;
             _totalTimeOffline = new TimeSpan();
-            _currentStateTimer = new TimeSpan();
             _currentlyOnline = false;
             _totalOutages = 0;
-
-            lblDowntime.Text = "N/A";
-            lblOutages.Text = "0";
-            lblStatus.Text = "ONLINE";
-            lblTimer.Text = "";
         }
 
         private void ShowAsOnline()
@@ -65,6 +93,8 @@ namespace OnlineStatusMonitor
 
             lblTimer.Font = _okFont;
             lblTimer.ForeColor = _okColour;
+
+            lblTimer.Text = "0s";
         }
 
         private void ShowAsOffline()
@@ -76,19 +106,35 @@ namespace OnlineStatusMonitor
 
             lblTimer.Font = _offlineFont;
             lblTimer.ForeColor = _offlineColour;
+
+            lblTimer.Text = "0s";
+        }
+
+        private void ShowOnlineToolTip()
+        {
+            notifyIcon.ShowBalloonTip(2500, "Online", "Good news! We can talk to " + txtHost.Text, ToolTipIcon.Info);
+        }
+
+        private void ShowOfflineToolTip()
+        {
+            notifyIcon.ShowBalloonTip(2500, "OFFLINE", "Bad times! We can't talk to " + txtHost.Text, ToolTipIcon.Error);
         }
 
         private void StartTimer()
         {
             ChangeState();
 
-            var aTimer = new System.Timers.Timer();
-            aTimer.Elapsed += OnTimedEvent;
-            aTimer.Interval = 1000;
-            aTimer.Start();
+            _timer = new Timer();
+            _timer.Elapsed += timer_Elapsed;
+            _timer.Interval = 1000;
+            _timer.Start();
         }
 
-        private delegate void UpdateStatusDelegate();
+        private void StopTimer()
+        {
+            if (_timer.Enabled)
+                _timer.Stop();
+        }
 
         private void UpdateStatus()
         {
@@ -98,15 +144,47 @@ namespace OnlineStatusMonitor
                 return;
             }
 
-            lblTimer.Text = PrettyFormatTimespan(_currentStateTimer);
-
             if (_currentlyOnline)
                 ShowAsOnline();
             else
                 ShowAsOffline();
 
-            lblOutages.Text = _totalOutages.ToString("#,##;N/A;N/A");
+            var timeSinceLastChange = GetSinceLastChange();
+            lblTimer.Text = PrettyFormatTimespan(timeSinceLastChange);
+
+            lblOutages.Text = _totalOutages.ToString("#,##;0;0");
             lblDowntime.Text = PrettyFormatTimespan(_totalTimeOffline);
+        }
+
+        private void ChangeIcon(string icon)
+        {
+            if (lblTimer.InvokeRequired)
+            {
+                Invoke(new ChangeIconDelegate(ChangeIcon), new object[] { icon });
+                return;
+            }
+
+            SetIcon(icon);
+        }
+
+        private void ChangeOfStatus(bool online)
+        {
+            if (lblTimer.InvokeRequired)
+            {
+                Invoke(new ChangeOfStatusDelegate(ChangeOfStatus), new object[] { online });
+                return;
+            }
+
+            if (online)
+            {
+                ShowOnlineToolTip();
+                ShowOnlineIcon();
+            }
+            else
+            {
+                ShowOfflineToolTip();
+                AnimateOfflineIcon();
+            }
         }
 
         private static string PrettyFormatTimespan(TimeSpan timer)
@@ -123,26 +201,16 @@ namespace OnlineStatusMonitor
             return offlineTime;
         }
 
-        private void OnTimedEvent(object sender, ElapsedEventArgs e)
+        private void timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             int averagePing;
             int packetLoss;
-
-            UpdateClock();
 
             GetNetworkStats(txtHost.Text, 10, 100, out averagePing, out packetLoss);
 
             RefreshStatusDisplay(packetLoss);
 
             UpdateStatus();
-        }
-
-        private void UpdateClock()
-        {
-            if (!_lastChanged.HasValue)
-                return;
-
-            _currentStateTimer = (DateTime.Now - _lastChanged.Value);
         }
 
         private void GetNetworkStats(string host, int pingAmount, int timeout, out int averagePing, out int packetLoss)
@@ -198,12 +266,25 @@ namespace OnlineStatusMonitor
             LogToTextFile();
             _currentlyOnline = true;
             ChangeState();
+            ChangeOfStatus(true);
         }
 
         private void LogToTextFile()
         {
+            var _currentStateTimer = GetSinceLastChange();
             var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1}\t{2:g}\t{3:#,##;0;0}\t{4:g}\r\n", DateTime.Now, _currentlyOnline ? "ONLINE" : "OFFLINE", _currentStateTimer, _totalOutages, _totalTimeOffline);
             System.IO.File.AppendAllText(@"log.txt", text);
+        }
+
+        private TimeSpan GetSinceLastChange()
+        {
+            if (_lastChanged == null)
+            {
+                _lastChanged = DateTime.Now;
+                return TimeSpan.Zero;
+            }
+
+            return DateTime.Now - _lastChanged.Value;
         }
 
         private void HandleJustGoneOffline()
@@ -212,11 +293,65 @@ namespace OnlineStatusMonitor
             _currentlyOnline = false;
             _totalOutages++;
             ChangeState();
+            ChangeOfStatus(false);
         }
 
         private void ChangeState()
         {
             _lastChanged = DateTime.Now;
+        }
+
+        private void AnimateOfflineIcon()
+        {
+            _iconTimer = new Timer();
+            _iconTimer.Elapsed += iconTimer_Elapsed;
+            _iconTimer.Interval = 250;
+            _iconTimer.Start();
+        }
+
+        private void ShowOnlineIcon()
+        {
+            if (_iconTimer != null)
+            {
+                _iconTimer.Enabled = false;
+                _iconTimer.Stop();
+                _iconTimer = null;
+            }
+
+            SetIcon("Globe-Green.ico");
+        }
+
+        void iconTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            ChangeIcon(_currentIcon.Equals("Globe-Red.ico") ? "Globe-Dark-Red.ico" : "Globe-Red.ico");
+        }
+
+        private void SetIcon(string path)
+        {
+            var ico = new Icon(path);
+
+            Icon = ico;
+            notifyIcon.Icon = ico;
+
+            _currentIcon = path;
+        }
+
+        private void UptimeMonitor_Closing(object sender, FormClosingEventArgs e)
+        {
+            notifyIcon.Visible = false;
+            notifyIcon.Dispose();
+
+            if (_timer != null)
+            {
+                _timer.Enabled = false;
+                _timer.Stop();
+            }
+
+            if (_iconTimer != null)
+            {
+                _iconTimer.Enabled = false;
+                _iconTimer.Stop();
+            }
         }
     }
 }

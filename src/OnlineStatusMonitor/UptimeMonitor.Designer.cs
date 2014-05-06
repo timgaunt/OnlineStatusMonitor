@@ -28,15 +28,18 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UptimeMonitor));
             this.label1 = new System.Windows.Forms.Label();
             this.txtHost = new System.Windows.Forms.TextBox();
             this.lblStatus = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnStart = new System.Windows.Forms.Button();
             this.lblTimer = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.lblOutages = new System.Windows.Forms.Label();
             this.lblDowntime = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
+            this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.SuspendLayout();
             // 
             // label1
@@ -68,15 +71,15 @@
             this.lblStatus.TabIndex = 2;
             this.lblStatus.Text = "ONLINE";
             // 
-            // button1
+            // btnStart
             // 
-            this.button1.Location = new System.Drawing.Point(198, 17);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(120, 38);
-            this.button1.TabIndex = 4;
-            this.button1.Text = "Start Monitoring";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btnStart.Location = new System.Drawing.Point(198, 17);
+            this.btnStart.Name = "btnStart";
+            this.btnStart.Size = new System.Drawing.Size(120, 38);
+            this.btnStart.TabIndex = 4;
+            this.btnStart.Text = "Start Monitoring";
+            this.btnStart.UseVisualStyleBackColor = true;
+            this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
             // 
             // lblTimer
             // 
@@ -130,6 +133,13 @@
             this.label4.TabIndex = 8;
             this.label4.Text = "Total Downtime";
             // 
+            // notifyIcon
+            // 
+            this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
+            this.notifyIcon.Text = "Uptime Monitor";
+            this.notifyIcon.Visible = true;
+            this.notifyIcon.Click += new System.EventHandler(this.notifyIcon_Click);
+            // 
             // UptimeMonitor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -140,12 +150,15 @@
             this.Controls.Add(this.lblOutages);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.lblTimer);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.btnStart);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.txtHost);
             this.Controls.Add(this.label1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "UptimeMonitor";
             this.Text = "Uptime Monitor";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.UptimeMonitor_Closing);
+            this.Resize += new System.EventHandler(this.UptimeMonitor_Resize);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -156,12 +169,13 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtHost;
         private System.Windows.Forms.Label lblStatus;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.Label lblTimer;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label lblOutages;
         private System.Windows.Forms.Label lblDowntime;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.NotifyIcon notifyIcon;
     }
 }
 
