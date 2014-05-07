@@ -284,9 +284,17 @@ namespace OnlineStatusMonitor
 
         private void LogToTextFile()
         {
+            var filename = @"log.txt";
+
+            if (!System.IO.File.Exists(filename))
+            {
+                var headers = String.Format("Log Date/Time\tStatus\tTime At Current State\tTotal Outages\tTotal Time Offline");
+                System.IO.File.AppendAllText(filename, headers);
+            }
+
             var _currentStateTimer = GetSinceLastChange();
             var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1}\t{2:g}\t{3:#,##;0;0}\t{4:g}\r\n", DateTime.Now, _currentlyOnline ? "ONLINE" : "OFFLINE", _currentStateTimer, _totalOutages, _totalTimeOffline);
-            System.IO.File.AppendAllText(@"log.txt", text);
+            System.IO.File.AppendAllText(filename, text);
         }
 
         private TimeSpan GetSinceLastChange()
