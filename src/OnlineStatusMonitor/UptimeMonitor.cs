@@ -204,12 +204,12 @@ namespace OnlineStatusMonitor
         {
             var offlineTime = String.Empty;
 
-            if (timer.TotalHours > 1)
-                offlineTime = String.Format("{0}h {1}m", timer.TotalHours, timer.Minutes);
-            else if (timer.TotalMinutes > 1)
-                offlineTime = String.Format("{0}m {1}s", timer.Minutes, timer.Seconds);
+            if (timer.TotalHours >= 1)
+                offlineTime = String.Format("{0:#,##}h {1:#,##}m", timer.TotalHours, timer.Minutes);
+            else if (timer.TotalMinutes >= 1)
+                offlineTime = String.Format("{0:#,##}m {1:#,##}s", timer.Minutes, timer.Seconds);
             else
-                offlineTime = String.Format("{0}s", timer.Seconds);
+                offlineTime = String.Format("{0:#,##}s", timer.Seconds);
 
             return offlineTime;
         }
