@@ -49,31 +49,44 @@ namespace OnlineStatusMonitor
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            RunOrCancel();
+        }
+
+        private void RunOrCancel()
+        {
             if (_isRunning)
-            {
-                btnStart.Text = "Start Monitoring";
-
-                lblStatus.Text = "";
-                lblTimer.Text = "";
-
-                StopTimer();
-
-                ShowOnlineIcon();
-
-                _isRunning = false;
-            }
+                StopMonitoring();
             else
-            {
-                btnStart.Text = "Stop Monitoring";
+                StartMonitoring();
+        }
 
-                Reset();
+        private void StartMonitoring()
+        {
+            btnStart.Text = "Stop Monitoring";
 
-                StartTimer();
+            Reset();
 
-                _isRunning = true;
+            StartTimer();
 
-                Hide();
-            }
+            _isRunning = true;
+
+            Hide();
+        }
+
+        private void StopMonitoring()
+        {
+            btnStart.Text = "Start Monitoring";
+
+            lblStatus.Text = "";
+            lblTimer.Text = "";
+
+            StopTimer();
+
+            ShowOnlineIcon();
+
+            LogToTextFile();
+
+            _isRunning = false;
         }
 
         private void Reset()
@@ -338,6 +351,9 @@ namespace OnlineStatusMonitor
 
         private void UptimeMonitor_Closing(object sender, FormClosingEventArgs e)
         {
+            if (_isRunning)
+                LogToTextFile();
+
             notifyIcon.Visible = false;
             notifyIcon.Dispose();
 
