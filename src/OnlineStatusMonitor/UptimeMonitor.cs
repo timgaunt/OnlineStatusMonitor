@@ -299,7 +299,7 @@ namespace OnlineStatusMonitor
 
         private static void WriteLineToLog(string filename, string text)
         {
-            System.IO.File.AppendAllText(filename + "\r\n", text);
+            System.IO.File.AppendAllText(filename, text + "\r\n");
         }
 
         private TimeSpan GetSinceLastChange()
