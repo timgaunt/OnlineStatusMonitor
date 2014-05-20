@@ -12,6 +12,9 @@ namespace OnlineStatusMonitor
 {
     public partial class UptimeMonitor : Form
     {
+        string _speedLogFilename = @"speed-log.txt";
+        string _statusLogFilename = @"log.txt";
+
         private string _currentIcon = "";
         private bool _isRunning;
         private Timer _iconTimer;
@@ -91,7 +94,7 @@ namespace OnlineStatusMonitor
 
             ShowOnlineIcon();
 
-            LogToTextFile();
+            LogStatusChangeToTextFile();
 
             _isRunning = false;
         }
@@ -181,6 +184,7 @@ namespace OnlineStatusMonitor
 
             var speed = DownloadSpeedTest.GetInternetSpeedInBytes();
             _speedLogs.Add(DateTime.Now, speed);
+            LogSpeedToTextFile();
 
             UpdateSpeed();
         }
@@ -334,30 +338,44 @@ namespace OnlineStatusMonitor
         {
             var currentStateTimer = GetSinceLastChange();
             _totalTimeOffline = _totalTimeOffline.Add(currentStateTimer);
-            LogToTextFile();
+            LogStatusChangeToTextFile();
             ChangeOfStatus(true);
             _currentlyOnline = true;
             ChangeState();
         }
 
-        private void LogToTextFile()
+        private void LogStatusChangeToTextFile()
         {
-            var filename = @"log.txt";
-
-            if (!System.IO.File.Exists(filename))
+            if (!System.IO.File.Exists(_statusLogFilename))
             {
                 var headers = String.Format("Log Date/Time\tStatus\tTime At Current State\tTotal Outages\tTotal Time Offline\tMin Speed\tAvg Speed\tMax Speed");
-                WriteLineToLog(filename, headers);
+                WriteLineToLog(_statusLogFilename, headers);
             }
 
             var currentStateTimer = GetSinceLastChange();
-
             var minSpeed = CalculateMinimumSpeed();
             var avgSpeed = CalculateAverageSpeed();
             var maxSpeed = CalculateMaximumSpeed();
 
             var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1}\t{2:g}\t{3:#,##;0;0}\t{4:g}\t{5:f2}\t{6:f2}\t{7:f2}", DateTime.Now, _currentlyOnline ? "ONLINE" : "OFFLINE", currentStateTimer, _totalOutages, _totalTimeOffline, minSpeed, avgSpeed, maxSpeed);
-            WriteLineToLog(filename, text);
+            WriteLineToLog(_statusLogFilename, text);
+        }
+
+        private void LogSpeedToTextFile()
+        {
+            if (!System.IO.File.Exists(_speedLogFilename))
+            {
+                var headers = String.Format("Log Date/Time\tCurrent Speed\tMin Speed\tAvg Speed\tMax Speed");
+                WriteLineToLog(_speedLogFilename, headers);
+            }
+
+            var lastSpeed = GetMostRecentSpeed();
+            var minSpeed = CalculateMinimumSpeed();
+            var avgSpeed = CalculateAverageSpeed();
+            var maxSpeed = CalculateMaximumSpeed();
+
+            var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1:f2}\t{2:f2}\t{3:f2}\t{4:f2}", DateTime.Now, lastSpeed, minSpeed, avgSpeed, maxSpeed);
+            WriteLineToLog(_speedLogFilename, text);
         }
 
         private double CalculateMinimumSpeed()
@@ -418,7 +436,7 @@ namespace OnlineStatusMonitor
 
         private void HandleJustGoneOffline()
         {
-            LogToTextFile();
+            LogStatusChangeToTextFile();
             ChangeOfStatus(false);
             _currentlyOnline = false;
             _totalOutages++;
@@ -468,7 +486,7 @@ namespace OnlineStatusMonitor
         private void UptimeMonitor_Closing(object sender, FormClosingEventArgs e)
         {
             if (_isRunning)
-                LogToTextFile();
+                LogStatusChangeToTextFile();
 
             notifyIcon.Visible = false;
             notifyIcon.Dispose();
