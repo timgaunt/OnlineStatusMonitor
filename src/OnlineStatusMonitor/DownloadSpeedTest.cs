@@ -38,7 +38,8 @@ namespace OnlineStatusMonitor
             double endtime = Environment.TickCount;
 
             var secs = Math.Floor(endtime - startTime) / 1000;
-            return Math.Round(fileSize / secs);
+            var speed = Math.Round(fileSize / secs);
+            return speed;
         }
 
         private static long DownloadFile()
