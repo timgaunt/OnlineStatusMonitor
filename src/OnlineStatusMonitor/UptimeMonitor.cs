@@ -328,14 +328,12 @@ namespace OnlineStatusMonitor
             {
                 HandleJustGoneOnline();
             }
-            else if (offline)
-            {
-                _totalTimeOffline = _totalTimeOffline.Add(new TimeSpan(0, 0, 0, 1));
-            }
         }
 
         private void HandleJustGoneOnline()
         {
+            var currentStateTimer = GetSinceLastChange();
+            _totalTimeOffline = _totalTimeOffline.Add(currentStateTimer);
             LogToTextFile();
             ChangeOfStatus(true);
             _currentlyOnline = true;
