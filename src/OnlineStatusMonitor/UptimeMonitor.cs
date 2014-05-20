@@ -133,7 +133,14 @@ namespace OnlineStatusMonitor
 
         private void ShowOnlineToolTip()
         {
-            notifyIcon.ShowBalloonTip(2500, "Online", "Good news! We can talk to " + txtHost.Text, ToolTipIcon.Info);
+            var currentStateTimer = GetSinceLastChange();
+            var averageSpeed = CalculateAverageSpeed();
+            var message = String.Format("Good news! We can talk to {0}", txtHost.Text);
+
+            if (currentStateTimer.TotalMinutes > 0)
+                message = String.Format("{0} after {1:#,##} minutes offline. Current speed: {2:f2}mbps", message, currentStateTimer.TotalMinutes, averageSpeed);
+
+            notifyIcon.ShowBalloonTip(2500, "Online", message, ToolTipIcon.Info);
         }
 
         private void ShowOfflineToolTip()
@@ -328,9 +335,9 @@ namespace OnlineStatusMonitor
         private void HandleJustGoneOnline()
         {
             LogToTextFile();
+            ChangeOfStatus(true);
             _currentlyOnline = true;
             ChangeState();
-            ChangeOfStatus(true);
         }
 
         private void LogToTextFile()
@@ -402,10 +409,10 @@ namespace OnlineStatusMonitor
         private void HandleJustGoneOffline()
         {
             LogToTextFile();
+            ChangeOfStatus(false);
             _currentlyOnline = false;
             _totalOutages++;
             ChangeState();
-            ChangeOfStatus(false);
         }
 
         private void ChangeState()
