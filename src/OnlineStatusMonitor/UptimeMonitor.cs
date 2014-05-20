@@ -137,7 +137,7 @@ namespace OnlineStatusMonitor
             var averageSpeed = CalculateAverageSpeed();
             var message = String.Format("Good news! We can talk to {0}", txtHost.Text);
 
-            if (currentStateTimer.TotalMinutes > 0)
+            if (currentStateTimer.TotalMinutes > 2)
                 message = String.Format("{0} after {1:#,##} minutes offline. Current speed: {2:f2}mbps", message, currentStateTimer.TotalMinutes, averageSpeed);
 
             notifyIcon.ShowBalloonTip(2500, "Online", message, ToolTipIcon.Info);
