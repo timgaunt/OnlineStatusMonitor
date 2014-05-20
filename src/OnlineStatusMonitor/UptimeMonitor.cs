@@ -395,8 +395,9 @@ namespace OnlineStatusMonitor
 
         private double GetSpeedInMegaBytes(double bytes)
         {
-            const long bytesInMegabytes = 1024 * 1024;
-            return bytes / bytesInMegabytes;
+            const long bytesInMegabytes = 128 * 1024;
+            var mb = bytes / bytesInMegabytes;
+            return mb;
         }
 
         private static void WriteLineToLog(string filename, string text)
