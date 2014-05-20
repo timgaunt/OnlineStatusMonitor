@@ -71,7 +71,7 @@ namespace OnlineStatusMonitor
 
             Reset();
 
-            RunSpeedTest();
+            RunSpeedTest(true);
             StartPingTimer();
             StartSpeedTestTimer();
 
@@ -171,13 +171,14 @@ namespace OnlineStatusMonitor
             RunSpeedTest();
         }
 
-        private void RunSpeedTest()
+        private void RunSpeedTest(bool ignoreStatus = false)
         {
-            if (!_currentlyOnline)
+            if (!ignoreStatus && !_currentlyOnline)
             {
                 UpdateSpeed();
                 return;
             }
+
             var speed = DownloadSpeedTest.GetInternetSpeedInBytes();
             _speedLogs.Add(DateTime.Now, speed);
 
@@ -256,6 +257,7 @@ namespace OnlineStatusMonitor
             }
 
             lblAvgSpeed.Text = CalculateAverageSpeed().ToString("f2");
+            lblCurrent.Text = GetMostRecentSpeed().ToString("f2");
         }
 
         private static string PrettyFormatTimespan(TimeSpan timer)
@@ -384,6 +386,15 @@ namespace OnlineStatusMonitor
             return GetSpeedInMegaBytes(_speedLogs.Max(s => s.Value));
         }
 
+        private double GetMostRecentSpeed()
+        {
+            if (!_speedLogs.Any())
+                return 0;
+
+            var mostRecent = _speedLogs.OrderByDescending(l => l.Key).FirstOrDefault();
+            return GetSpeedInMegaBytes(mostRecent.Value);
+        }
+
         private double GetSpeedInMegaBytes(double bytes)
         {
             const long bytesInMegabytes = 1024 * 1024;
@@ -474,6 +485,18 @@ namespace OnlineStatusMonitor
                 _iconTimer.Enabled = false;
                 _iconTimer.Stop();
             }
+        }
+
+        private void lblAvgSpeed_DoubleClick(object sender, EventArgs e)
+        {
+            RunSpeedTest(true);
+            lblAvgSpeed.Text = CalculateAverageSpeed().ToString("f2");
+        }
+
+        private void lblCurrent_DoubleClick(object sender, EventArgs e)
+        {
+            RunSpeedTest(true);
+            lblCurrent.Text = GetMostRecentSpeed().ToString("f2");
         }
     }
 

@@ -42,6 +42,8 @@
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.lblAvgSpeed = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
+            this.lblCurrent = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -151,6 +153,7 @@
             this.lblAvgSpeed.TabIndex = 11;
             this.lblAvgSpeed.Text = "0";
             this.lblAvgSpeed.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblAvgSpeed.DoubleClick += new System.EventHandler(this.lblAvgSpeed_DoubleClick);
             // 
             // label5
             // 
@@ -162,11 +165,34 @@
             this.label5.TabIndex = 10;
             this.label5.Text = "Avg. Speed";
             // 
+            // lblCurrent
+            // 
+            this.lblCurrent.Font = new System.Drawing.Font("Verdana", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblCurrent.Location = new System.Drawing.Point(274, 115);
+            this.lblCurrent.Name = "lblCurrent";
+            this.lblCurrent.Size = new System.Drawing.Size(44, 14);
+            this.lblCurrent.TabIndex = 13;
+            this.lblCurrent.Text = "0";
+            this.lblCurrent.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblCurrent.DoubleClick += new System.EventHandler(this.lblCurrent_DoubleClick);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Verdana", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(190, 115);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(75, 14);
+            this.label6.TabIndex = 12;
+            this.label6.Text = "Cur. Speed";
+            // 
             // UptimeMonitor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(332, 145);
+            this.Controls.Add(this.lblCurrent);
+            this.Controls.Add(this.label6);
             this.Controls.Add(this.lblAvgSpeed);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.lblDowntime);
@@ -202,6 +228,8 @@
         private System.Windows.Forms.NotifyIcon notifyIcon;
         private System.Windows.Forms.Label lblAvgSpeed;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label lblCurrent;
+        private System.Windows.Forms.Label label6;
     }
 }
 
