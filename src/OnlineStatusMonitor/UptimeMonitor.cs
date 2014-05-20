@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Timers;
@@ -13,11 +15,13 @@ namespace OnlineStatusMonitor
         private string _currentIcon = "";
         private bool _isRunning;
         private Timer _iconTimer;
-        private Timer _timer;
+        private Timer _pingTimer;
+        private Timer _speedTimer;
         private int _totalOutages;
         private DateTime? _lastChanged;
         private TimeSpan _totalTimeOffline;
         private bool _currentlyOnline;
+        private Dictionary<DateTime, double> _speedLogs;
 
         readonly Color _offlineColour = Color.FromArgb(192, 0, 0);
         readonly Font _offlineFont = new Font("Verdana", 20F, FontStyle.Bold, GraphicsUnit.Point, 0);
@@ -25,6 +29,7 @@ namespace OnlineStatusMonitor
         readonly Font _okFont = new Font("Verdana", 20F, FontStyle.Bold, GraphicsUnit.Point, 0);
 
         private delegate void ChangeOfStatusDelegate(bool online);
+        private delegate void UpdateSpeedDelegate();
         private delegate void UpdateStatusDelegate();
         private delegate void ChangeIconDelegate(string icon);
 
@@ -66,7 +71,9 @@ namespace OnlineStatusMonitor
 
             Reset();
 
-            StartTimer();
+            RunSpeedTest();
+            StartPingTimer();
+            StartSpeedTestTimer();
 
             _isRunning = true;
 
@@ -95,6 +102,7 @@ namespace OnlineStatusMonitor
             _totalTimeOffline = new TimeSpan();
             _currentlyOnline = false;
             _totalOutages = 0;
+            _speedLogs = new Dictionary<DateTime, double>();
         }
 
         private void ShowAsOnline()
@@ -133,20 +141,51 @@ namespace OnlineStatusMonitor
             notifyIcon.ShowBalloonTip(2500, "OFFLINE", "Bad times! We can't talk to " + txtHost.Text, ToolTipIcon.Error);
         }
 
-        private void StartTimer()
+        private void StartPingTimer()
         {
             ChangeState();
 
-            _timer = new Timer();
-            _timer.Elapsed += timer_Elapsed;
-            _timer.Interval = 1000;
-            _timer.Start();
+            _pingTimer = new Timer();
+            _pingTimer.Elapsed += PingTimerElapsed;
+            _pingTimer.Interval = 1000;
+            _pingTimer.Start();
+        }
+
+        private void StartSpeedTestTimer()
+        {
+            _speedTimer = new Timer();
+            _speedTimer.Elapsed += SpeedTestTimerElapsed;
+            _speedTimer.Interval = GetMinutesInMilliseconds(5);
+            _speedTimer.Start();
+        }
+
+        private void SpeedTestTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            RunSpeedTest();
+        }
+
+        private void RunSpeedTest()
+        {
+            if (!_currentlyOnline)
+            {
+                UpdateSpeed();
+                return;
+            }
+            var speed = DownloadSpeedTest.GetInternetSpeedInBytes();
+            _speedLogs.Add(DateTime.Now, speed);
+
+            UpdateSpeed();
+        }
+
+        private double GetMinutesInMilliseconds(int i)
+        {
+            return i * 60 * 1000;
         }
 
         private void StopTimer()
         {
-            if (_timer.Enabled)
-                _timer.Stop();
+            if (_pingTimer.Enabled)
+                _pingTimer.Stop();
         }
 
         private void UpdateStatus()
@@ -190,6 +229,7 @@ namespace OnlineStatusMonitor
 
             if (online)
             {
+                RunSpeedTest();
                 ShowOnlineToolTip();
                 ShowOnlineIcon();
             }
@@ -198,6 +238,17 @@ namespace OnlineStatusMonitor
                 ShowOfflineToolTip();
                 AnimateOfflineIcon();
             }
+        }
+
+        private void UpdateSpeed()
+        {
+            if (lblAvgSpeed.InvokeRequired)
+            {
+                Invoke(new UpdateSpeedDelegate(UpdateSpeed));
+                return;
+            }
+
+            lblAvgSpeed.Text = CalculateAverageSpeed().ToString("f2");
         }
 
         private static string PrettyFormatTimespan(TimeSpan timer)
@@ -214,7 +265,7 @@ namespace OnlineStatusMonitor
             return offlineTime;
         }
 
-        private void timer_Elapsed(object sender, ElapsedEventArgs e)
+        private void PingTimerElapsed(object sender, ElapsedEventArgs e)
         {
             int averagePing;
             int packetLoss;
@@ -288,13 +339,48 @@ namespace OnlineStatusMonitor
 
             if (!System.IO.File.Exists(filename))
             {
-                var headers = String.Format("Log Date/Time\tStatus\tTime At Current State\tTotal Outages\tTotal Time Offline");
+                var headers = String.Format("Log Date/Time\tStatus\tTime At Current State\tTotal Outages\tTotal Time Offline\tMin Speed\tAvg Speed\tMax Speed");
                 WriteLineToLog(filename, headers);
             }
 
-            var _currentStateTimer = GetSinceLastChange();
-            var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1}\t{2:g}\t{3:#,##;0;0}\t{4:g}", DateTime.Now, _currentlyOnline ? "ONLINE" : "OFFLINE", _currentStateTimer, _totalOutages, _totalTimeOffline);
+            var currentStateTimer = GetSinceLastChange();
+
+            var minSpeed = CalculateMinimumSpeed();
+            var avgSpeed = CalculateAverageSpeed();
+            var maxSpeed = CalculateMaximumSpeed();
+
+            var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1}\t{2:g}\t{3:#,##;0;0}\t{4:g}\t{5:f2}\t{6:f2}\t{7:f2}", DateTime.Now, _currentlyOnline ? "ONLINE" : "OFFLINE", currentStateTimer, _totalOutages, _totalTimeOffline, minSpeed, avgSpeed, maxSpeed);
             WriteLineToLog(filename, text);
+        }
+
+        private double CalculateMinimumSpeed()
+        {
+            if (!_speedLogs.Any())
+                return 0;
+
+            return GetSpeedInMegaBytes(_speedLogs.Min(s => s.Value));
+        }
+
+        private double CalculateAverageSpeed()
+        {
+            if (!_speedLogs.Any())
+                return 0;
+
+            return GetSpeedInMegaBytes(_speedLogs.Average(s => s.Value));
+        }
+
+        private double CalculateMaximumSpeed()
+        {
+            if (!_speedLogs.Any())
+                return 0;
+
+            return GetSpeedInMegaBytes(_speedLogs.Max(s => s.Value));
+        }
+
+        private double GetSpeedInMegaBytes(double bytes)
+        {
+            const long bytesInMegabytes = 1024 * 1024;
+            return bytes / bytesInMegabytes;
         }
 
         private static void WriteLineToLog(string filename, string text)
@@ -370,10 +456,10 @@ namespace OnlineStatusMonitor
             notifyIcon.Visible = false;
             notifyIcon.Dispose();
 
-            if (_timer != null)
+            if (_pingTimer != null)
             {
-                _timer.Enabled = false;
-                _timer.Stop();
+                _pingTimer.Enabled = false;
+                _pingTimer.Stop();
             }
 
             if (_iconTimer != null)
@@ -383,4 +469,5 @@ namespace OnlineStatusMonitor
             }
         }
     }
+
 }

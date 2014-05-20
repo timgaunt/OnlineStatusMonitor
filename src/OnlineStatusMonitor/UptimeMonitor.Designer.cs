@@ -40,6 +40,8 @@
             this.lblDowntime = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.lblAvgSpeed = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -140,11 +142,33 @@
             this.notifyIcon.Visible = true;
             this.notifyIcon.Click += new System.EventHandler(this.notifyIcon_Click);
             // 
+            // lblAvgSpeed
+            // 
+            this.lblAvgSpeed.Font = new System.Drawing.Font("Verdana", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblAvgSpeed.Location = new System.Drawing.Point(274, 94);
+            this.lblAvgSpeed.Name = "lblAvgSpeed";
+            this.lblAvgSpeed.Size = new System.Drawing.Size(44, 14);
+            this.lblAvgSpeed.TabIndex = 11;
+            this.lblAvgSpeed.Text = "0";
+            this.lblAvgSpeed.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Verdana", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.Location = new System.Drawing.Point(190, 94);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(78, 14);
+            this.label5.TabIndex = 10;
+            this.label5.Text = "Avg. Speed";
+            // 
             // UptimeMonitor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(332, 145);
+            this.Controls.Add(this.lblAvgSpeed);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.lblDowntime);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.lblOutages);
@@ -176,6 +200,8 @@
         private System.Windows.Forms.Label lblDowntime;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.NotifyIcon notifyIcon;
+        private System.Windows.Forms.Label lblAvgSpeed;
+        private System.Windows.Forms.Label label5;
     }
 }
 
