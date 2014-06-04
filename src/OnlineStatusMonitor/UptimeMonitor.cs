@@ -30,6 +30,8 @@ namespace OnlineStatusMonitor
         readonly Font _offlineFont = new Font("Verdana", 20F, FontStyle.Bold, GraphicsUnit.Point, 0);
         readonly Color _okColour = Color.FromArgb(0, 192, 0);
         readonly Font _okFont = new Font("Verdana", 20F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        readonly Color _offlineBackColour = Color.FromArgb(255, 192, 192);
+        readonly Color _okBackColour = Color.FromArgb(192, 255, 192);
 
         private delegate void ChangeOfStatusDelegate(bool online);
         private delegate void UpdateSpeedDelegate();
@@ -119,6 +121,7 @@ namespace OnlineStatusMonitor
             lblTimer.ForeColor = _okColour;
 
             lblTimer.Text = "0s";
+            panel1.BackColor = _okBackColour;
         }
 
         private void ShowAsOffline()
@@ -132,6 +135,7 @@ namespace OnlineStatusMonitor
             lblTimer.ForeColor = _offlineColour;
 
             lblTimer.Text = "0s";
+            panel1.BackColor = _offlineBackColour;
         }
 
         private void ShowOnlineToolTip()
@@ -260,8 +264,8 @@ namespace OnlineStatusMonitor
                 return;
             }
 
-            lblAvgSpeed.Text = CalculateAverageSpeed().ToString("f2");
-            lblCurrent.Text = GetMostRecentSpeed().ToString("f2");
+            lblAvgSpeed.Text = CalculateAverageSpeed().ToString("f2") + " mbps";
+            lblCurrent.Text = GetMostRecentSpeed().ToString("f2") + " mbps";
         }
 
         private static string PrettyFormatTimespan(TimeSpan timer)
@@ -507,13 +511,13 @@ namespace OnlineStatusMonitor
         private void lblAvgSpeed_DoubleClick(object sender, EventArgs e)
         {
             RunSpeedTest(true);
-            lblAvgSpeed.Text = CalculateAverageSpeed().ToString("f2");
+            lblAvgSpeed.Text = CalculateAverageSpeed().ToString("f2") + " mbps";
         }
 
         private void lblCurrent_DoubleClick(object sender, EventArgs e)
         {
             RunSpeedTest(true);
-            lblCurrent.Text = GetMostRecentSpeed().ToString("f2");
+            lblCurrent.Text = GetMostRecentSpeed().ToString("f2") + " mbps";
         }
     }
 
