@@ -42,6 +42,13 @@ namespace OnlineStatusMonitor
             Reset();
         }
 
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            StartMonitoring();
+        }
+        
         void UptimeMonitor_Resize(object sender, EventArgs e)
         {
             if (WindowState == FormWindowState.Minimized)
@@ -70,6 +77,10 @@ namespace OnlineStatusMonitor
 
         private void StartMonitoring()
         {
+            // Assume true to start with as this will get reset if not
+            // Can't set this on initialise as if you restart the monitor when offline it won't be set
+            _currentlyOnline = true; 
+
             btnStart.Text = "Stop Monitoring";
 
             Reset();
