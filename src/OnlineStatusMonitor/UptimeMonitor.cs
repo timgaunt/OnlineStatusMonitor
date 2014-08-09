@@ -182,9 +182,12 @@ namespace OnlineStatusMonitor
                 return;
             }
 
-            var speed = DownloadSpeedTest.GetInternetSpeedInBytes();
-            _speedLogs.Add(DateTime.Now, speed);
-            LogSpeedToTextFile();
+            if (_currentlyOnline)
+            {
+                var speed = DownloadSpeedTest.GetInternetSpeedInBytes();
+                _speedLogs.Add(DateTime.Now, speed);
+                LogSpeedToTextFile();
+            }
 
             UpdateSpeed();
         }
@@ -413,6 +416,9 @@ namespace OnlineStatusMonitor
 
         private double GetSpeedInMegaBytes(double bytes)
         {
+            if (!_currentlyOnline)
+                return 0;
+
             const long bytesInMegabytes = 128 * 1024;
             var mb = bytes / bytesInMegabytes;
             return mb;
