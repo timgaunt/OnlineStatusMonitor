@@ -77,10 +77,6 @@ namespace OnlineStatusMonitor
 
         private void StartMonitoring()
         {
-            // Assume true to start with as this will get reset if not
-            // Can't set this on initialise as if you restart the monitor when offline it won't be set
-            _currentlyOnline = true; 
-
             btnStart.Text = "Stop Monitoring";
 
             Reset();
@@ -195,9 +191,17 @@ namespace OnlineStatusMonitor
 
             if (_currentlyOnline)
             {
-                var speed = DownloadSpeedTest.GetInternetSpeedInBytes();
-                _speedLogs.Add(DateTime.Now, speed);
-                LogSpeedToTextFile();
+                try
+                {
+                    var speed = DownloadSpeedTest.GetInternetSpeedInBytes();
+                    _speedLogs.Add(DateTime.UtcNow, speed);
+                    LogSpeedToTextFile();
+                }
+                catch (Exception)
+                {
+                    var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\tOFFLINE", DateTime.UtcNow);
+                    WriteLineToLog(_speedLogFilename, text);
+                }
             }
 
             UpdateSpeed();
