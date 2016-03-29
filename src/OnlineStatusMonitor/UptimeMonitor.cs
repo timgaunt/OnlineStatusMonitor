@@ -295,7 +295,7 @@ namespace OnlineStatusMonitor
             else if (timer.TotalMinutes >= 1)
                 offlineTime = String.Format("{0:#,##;0;0}m {1:#,##;0;0}s", timer.Minutes, timer.Seconds);
             else
-                offlineTime = String.Format("{0:#,##;0}s", timer.Seconds);
+                offlineTime = String.Format("{0:#,##;0;0}s", timer.Seconds);
 
             return offlineTime;
         }
