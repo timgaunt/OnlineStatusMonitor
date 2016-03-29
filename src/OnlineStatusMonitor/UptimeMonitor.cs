@@ -48,7 +48,7 @@ namespace OnlineStatusMonitor
 
             StartMonitoring();
         }
-        
+
         void UptimeMonitor_Resize(object sender, EventArgs e)
         {
             if (WindowState == FormWindowState.Minimized)
@@ -375,7 +375,7 @@ namespace OnlineStatusMonitor
             var avgSpeed = CalculateAverageSpeed();
             var maxSpeed = CalculateMaximumSpeed();
 
-            var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1}\t{2:g}\t{3:#,##;0;0}\t{4:g}\t{5:f2}\t{6:f2}\t{7:f2}", DateTime.Now, _currentlyOnline ? "ONLINE" : "OFFLINE", currentStateTimer, _totalOutages, _totalTimeOffline, minSpeed, avgSpeed, maxSpeed);
+            var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1}\t{2:g}\t{3:#,##;0;0}\t{4:g}\t{5:f2}\t{6:f2}\t{7:f2}", DateTime.UtcNow, _currentlyOnline ? "ONLINE" : "OFFLINE", currentStateTimer, _totalOutages, _totalTimeOffline, minSpeed, avgSpeed, maxSpeed);
             WriteLineToLog(_statusLogFilename, text);
         }
 
@@ -392,7 +392,7 @@ namespace OnlineStatusMonitor
             var avgSpeed = CalculateAverageSpeed();
             var maxSpeed = CalculateMaximumSpeed();
 
-            var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1:f2}\t{2:f2}\t{3:f2}\t{4:f2}", DateTime.Now, lastSpeed, minSpeed, avgSpeed, maxSpeed);
+            var text = String.Format("{0:yyyy-MM-dd HH:mm:ss}\t{1:f2}\t{2:f2}\t{3:f2}\t{4:f2}", DateTime.UtcNow, lastSpeed, minSpeed, avgSpeed, maxSpeed);
             WriteLineToLog(_speedLogFilename, text);
         }
 
@@ -448,11 +448,11 @@ namespace OnlineStatusMonitor
         {
             if (_lastChanged == null)
             {
-                _lastChanged = DateTime.Now;
+                _lastChanged = DateTime.UtcNow;
                 return TimeSpan.Zero;
             }
 
-            return DateTime.Now - _lastChanged.Value;
+            return DateTime.UtcNow - _lastChanged.Value;
         }
 
         private void HandleJustGoneOffline()
@@ -466,7 +466,7 @@ namespace OnlineStatusMonitor
 
         private void ChangeState()
         {
-            _lastChanged = DateTime.Now;
+            _lastChanged = DateTime.UtcNow;
         }
 
         private void AnimateOfflineIcon()
